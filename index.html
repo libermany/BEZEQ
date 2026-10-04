@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בזק אינטרנט - השארת פרטים</title>
+<style>
+  :root { --navy:#0f1d5c; --navy-dark:#172554; --blue:#0a6cff; --cyan:#6fe3ff; --line:#c9ced8; --error:#c0214f; --ok:#0b7a3b; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: "Segoe UI","Arial Hebrew",Arial,sans-serif; color: var(--navy); background: var(--blue); }
+  .page { display: flex; min-height: 100vh; }
+  .hero { flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:40px; text-align:center;
+    background: radial-gradient(1100px 600px at 85% 5%, rgba(111,227,255,.95) 0%, rgba(111,227,255,0) 60%), radial-gradient(900px 700px at 15% 40%, rgba(10,108,255,1) 0%, rgba(10,108,255,0) 70%), linear-gradient(180deg,#0a74ff 0%,#0a5de0 55%,#020b33 100%); }
+  .hero::before, .hero::after { content:""; position:absolute; border-radius:50%; }
+  .hero::before { width:900px; height:900px; left:-300px; top:-250px; background: radial-gradient(circle at 60% 40%, rgba(255,255,255,.18), rgba(255,255,255,0) 65%); }
+  .hero::after { width:700px; height:700px; right:-220px; top:40px; background: radial-gradient(circle at 40% 40%, rgba(111,227,255,.55), rgba(111,227,255,0) 65%); }
+  .hero > * { position: relative; z-index: 1; }
+  .ring { position:absolute; top:22px; left:26px; width:74px; height:74px; border:4px solid #fff; border-radius:50%; z-index:1; display:flex; align-items:center; justify-content:center; color:#fff; font-size:38px; font-weight:600; }
+  .badge { width:170px; height:170px; border-radius:50%; background: rgba(40,110,230,.75); color:#fff; font-weight:800; font-size:26px; line-height:1.1; display:flex; align-items:center; justify-content:center; transform:rotate(-8deg); margin-bottom:26px; box-shadow:0 8px 30px rgba(0,0,0,.18); }
+  .hero h1 { margin:0; font-size:74px; line-height:1; font-weight:800; color:var(--navy); }
+  .hero h1 span { color:#fff; display:block; }
+  .hero .sub { margin-top:20px; color:#fff; font-size:30px; line-height:1.3; }
+  .hero .sub b { font-size:40px; }
+  .hero .sub small { display:block; font-size:24px; margin-top:8px; }
+  .panel { order:1; width:520px; max-width:100%; background:#fff; padding:36px 30px 40px; display:flex; flex-direction:column; justify-content:center; box-shadow:0 0 40px rgba(0,0,0,.2); z-index:2; }
+  .brand { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  .brand .mark { width:64px; height:64px; border-radius:22px; background:var(--navy-dark); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; }
+  .brand .t1 { font-size:20px; font-weight:700; }
+  .brand .t2 { font-size:38px; font-weight:800; line-height:1.05; }
+  h2 { margin:22px 0 16px; font-size:24px; text-align:center; }
+  .field { margin-bottom:14px; }
+  .field input, .field select { width:100%; height:50px; padding:0 16px; font-size:17px; font-family:inherit; color:var(--navy); border:1px solid var(--line); border-radius:8px; background:#fff; outline:none; }
+  .field input::placeholder { color:#9aa3b5; }
+  .field input:focus, .field select:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(10,108,255,.15); }
+  .field.err input, .field.err select { border-color:var(--error); }
+  .row { display:flex; gap:12px; }
+  .row .field { flex:1; }
+  .check { display:flex; gap:10px; align-items:flex-start; margin:14px 0; font-size:15px; line-height:1.5; color:#46506a; }
+  .check input { margin-top:5px; width:18px; height:18px; flex:none; }
+  .check a { color:var(--error); text-decoration:none; }
+  .check.err { color:var(--error); }
+  button.send { width:100%; height:56px; margin-top:10px; border:0; border-radius:30px; cursor:pointer; background:var(--navy-dark); color:#fff; font-size:22px; font-weight:700; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:14px; transition:background .15s; }
+  button.send:hover { background:#0b1640; }
+  button.send:disabled { opacity:.6; cursor:default; }
+  button.send svg { width:24px; height:24px; }
+  .msg { margin-top:16px; padding:12px 14px; border-radius:8px; font-size:16px; display:none; }
+  .msg.ok { display:block; background:#e8f6ee; color:var(--ok); border:1px solid #b9e2c9; }
+  .msg.bad { display:block; background:#fdecf1; color:var(--error); border:1px solid #f3c1d0; }
+  @media (max-width: 900px) {
+    .page { flex-direction:column; }
+    .panel { width:100%; order:0; }
+    .hero { min-height:320px; padding:30px 20px; }
+    .hero h1 { font-size:44px; }
+    .hero .sub { font-size:20px; }
+    .hero .sub b { font-size:26px; }
+    .badge { width:120px; height:120px; font-size:18px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero" aria-hidden="true">
+    <div class="ring">R</div>
+    <div class="badge">מבצע<br>אינטרנט<br>עוצמתי</div>
+    <h1>בזק אינטרנט<span>במחיר מיוחד</span></h1>
+    <div class="sub">החל מ-<b>99 ₪</b> לחודש<small>עם נתב הכולל חבילת סייבר ומשפר גלישה</small></div>
+  </section>
+  <main class="panel">
+    <div class="brand"><div class="mark">בזק</div><div><div class="t1">בזק אינטרנט</div><div class="t2">מחיר מיוחד</div></div></div>
+    <h2>השאירו פרטים ונחזור אליכם</h2>
+    <form id="lead" novalidate>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0">
+      <div class="row">
+        <div class="field" id="f-first"><input id="firstName" name="firstName" placeholder="שם פרטי" autocomplete="given-name" maxlength="50"></div>
+        <div class="field" id="f-last"><input id="lastName" name="lastName" placeholder="שם משפחה" autocomplete="family-name" maxlength="50"></div>
+      </div>
+      <div class="field" id="f-phone"><input id="phoneNumber" name="phoneNumber" type="tel" inputmode="tel" placeholder="טלפון לחזרה" autocomplete="tel" maxlength="20"></div>
+      <div class="field" id="f-address"><input id="address" name="address" placeholder="כתובת (רחוב, מספר ועיר)" autocomplete="street-address" maxlength="100"></div>
+      <div class="field" id="f-speed">
+        <select id="requestedSpeed" name="requestedSpeed">
+          <option value="" selected disabled>מהירות נדרשת</option>
+          <option value="100">100 Mbps</option>
+          <option value="200">200 Mbps</option>
+          <option value="500">500 Mbps</option>
+          <option value="1000">1000 Mbps</option>
+          <option value="2500">2500 Mbps</option>
+        </select>
+      </div>
+      <label class="check" id="c-terms"><input type="checkbox" id="terms"><span>אני מסכים/ מסכימה ל<a href="#" tabindex="-1">תנאי השימוש</a> באתר ו<a href="#" tabindex="-1">מדיניות הפרטיות</a> ומאשר/ת יצירת קשר</span></label>
+      <label class="check"><input type="checkbox" id="marketing"><span>אני מסכים/ה לקבל מבזק מידע שיווקי במייל / SMS</span></label>
+      <button class="send" id="send" type="submit"><span>שליחה</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></svg></button>
+      <div class="msg" id="msg" role="status"></div>
+    </form>
+  </main>
+</div>
+<script>
+(function () {
+  // ===== SETTINGS: address of the proxy (see lead-proxy-worker.js) =====
+  var API = 'https://REPLACE-WITH-YOUR-WORKER.workers.dev/api/lead';
+  // =====================================================================
+  var form = document.getElementById('lead');
+  var msg = document.getElementById('msg');
+  var btn = document.getElementById('send');
+  function mark(id, bad) { document.getElementById(id).classList.toggle('err', !!bad); }
+  function show(text, ok) { msg.textContent = text; msg.className = 'msg ' + (ok ? 'ok' : 'bad'); }
+  function normalizePhone(v) {
+    var d = String(v).replace(/[^\d+]/g, '');
+    if (d.indexOf('+') === 0) return d;
+    if (d.indexOf('972') === 0) return '+' + d;
+    if (d.indexOf('0') === 0) return '+972' + d.substring(1);
+    return d;
+  }
+  function clean(v) { return String(v).replace(/["\\\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    msg.className = 'msg';
+    var data = { firstName: clean(form.firstName.value), lastName: clean(form.lastName.value), phoneNumber: normalizePhone(form.phoneNumber.value), address: clean(form.address.value), requestedSpeed: form.requestedSpeed.value, website: form.website.value };
+    var phoneOk = /^\+\d{9,15}$/.test(data.phoneNumber);
+    mark('f-first', !data.firstName); mark('f-last', !data.lastName); mark('f-phone', !phoneOk); mark('f-address', !data.address); mark('f-speed', !data.requestedSpeed); mark('c-terms', !form.terms.checked);
+    if (!data.firstName || !data.lastName || !phoneOk || !data.address || !data.requestedSpeed || !form.terms.checked) { show('נא למלא את כל השדות ולאשר את התנאים.', false); return; }
+    btn.disabled = true;
+    fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, body: j }; }); })
+      .then(function (res) {
+        if (res.ok && res.body && res.body.workitemId) { show('תודה! הפנייה התקבלה ונציג יחזור אליכם בהקדם.', true); form.reset(); }
+        else { show('לא הצלחנו לשלוח את הפנייה' + (res.body && res.body.error ? ' (' + res.body.error + ')' : '') + '. נסו שוב.', false); }
+      })
+      .catch(function () { show('אין חיבור לשרת. נסו שוב מאוחר יותר.', false); })
+      .then(function () { btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>Notif6 Recipients</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --muted:#5b6670; --line:#d9dee3; --accent:#1f4aa8; --accent-ink:#fff;
+          --bad:#b3261e; --badbg:#fde7e5; --ok:#1b7a43; --dirty:#fff7d6; --new:#e6f4ea; --sel:#e8eefc; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14181d; --card:#1c2128; --ink:#e6e9ed; --muted:#9aa5b1; --line:#323a44; --accent:#6d97f2; --accent-ink:#0d1520;
+            --bad:#ff8a80; --badbg:#3a1f1d; --ok:#59c98a; --dirty:#3b3519; --new:#173223; --sel:#1f2a44; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.4 system-ui,"Segoe UI",Arial,sans-serif; }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+  h1 { font-size:18px; margin:0; }
+  .sub { color:var(--muted); font-size:12px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 16px; }
+  button { font:inherit; padding:6px 12px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); cursor:pointer; }
+  button:hover:not(:disabled) { border-color:var(--accent); }
+  button:disabled { opacity:.5; cursor:default; }
+  button.primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  button.danger { color:var(--bad); border-color:var(--bad); }
+  #status { margin:0 16px 8px; padding:8px 12px; border-radius:6px; display:none; }
+  #status.err { display:block; background:var(--badbg); color:var(--bad); }
+  #status.ok  { display:block; background:var(--new); color:var(--ok); }
+  #status.info{ display:block; background:var(--sel); color:var(--ink); }
+  .wrap { margin:0 16px 24px; background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:auto; max-height:calc(100vh - 190px); }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th, td { padding:3px 4px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; white-space:nowrap; }
+  th { position:sticky; top:0; background:var(--card); z-index:2; font-weight:600; border-bottom:2px solid var(--line); }
+  tr.dirty td { background:var(--dirty); } tr.isnew td { background:var(--new); } tr.sel td { box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--sel) 70%, transparent); }
+  td.key { font-weight:600; text-align:center; width:38px; }
+  input[type=text], input[type=tel], input[type=email] { width:100%; padding:3px 5px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink); font:inherit; }
+  input.bad { border-color:var(--bad); background:var(--badbg); }
+  input[type=checkbox] { width:16px; height:16px; }
+  td.c { text-align:center; width:54px; }
+  .w-name{min-width:130px} .w-tel{min-width:112px} .w-id{min-width:150px} .w-tpl{min-width:110px} .w-mail{min-width:150px}
+  .empty { padding:24px; text-align:center; color:var(--muted); }
+  #login { margin:48px auto; max-width:460px; padding:24px; background:var(--card); border:1px solid var(--line); border-radius:8px; text-align:center; display:none; }
+  dialog { border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); max-width:520px; }
+  dialog::backdrop { background:rgba(0,0,0,.4); }
+  .legend { margin:0 16px 8px; font-size:12px; color:var(--muted); }
+  .legend span { display:inline-block; padding:1px 8px; border-radius:4px; margin-right:6px; border:1px solid var(--line); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Notification recipients <span class="sub" id="tname"></span></h1>
+    <div class="sub">Genesys Cloud Data Table <b>Notif6_Recipients</b> &middot; one line per recipient &middot; the key is numbered automatically (1, 2, 3 ...)</div>
+  </div>
+  <div class="sub"><span id="who"></span> <button id="btnOut" type="button" hidden>Sign out</button></div>
+</header>
+
+<div id="login">
+  <p>Sign in with your Genesys Cloud account to view and change the recipients.</p>
+  <button id="btnIn" class="primary" type="button">Sign in with Genesys Cloud</button>
+  <p class="sub">You need permission to view and edit Architect data table rows.</p>
+</div>
+
+<div id="app" hidden>
+  <div class="bar">
+    <button id="btnAdd" type="button">+ Add line</button>
+    <button id="btnSave" type="button" class="primary" disabled>Save changes</button>
+    <button id="btnDiscard" type="button" disabled>Discard changes</button>
+    <button id="btnDel" type="button" class="danger" disabled>Delete selected</button>
+    <button id="btnReload" type="button">Reload</button>
+    <span class="sub" id="count"></span>
+  </div>
+  <div id="status" role="status"></div>
+  <div class="legend"><span style="background:var(--dirty)">changed</span><span style="background:var(--new)">new (not saved)</span>
+    Phone numbers: +972501234567 (no spaces). User id: the Genesys user id (UUID). Keys are renumbered 1..N after a delete, because the workflow stops at the first missing key.</div>
+  <div class="wrap"><table id="grid"><thead></thead><tbody></tbody></table><div id="empty" class="empty" hidden>No lines. Use "+ Add line".</div></div>
+</div>
+
+<dialog id="dlg"><form method="dialog"><p id="dlgText"></p><div style="text-align:right;margin-top:12px">
+  <button value="cancel">Cancel</button> <button id="dlgOk" value="ok" class="danger">Delete</button></div></form></dialog>
+
+<script>
+'use strict';
+/* ---------- configuration (public values only - no secrets) ---------- */
+const CFG = {
+  region:   'euw2.pure.cloud',
+  clientId: '5df285fb-c69c-4360-8599-f893bb9ae8d3',   // OAuth client "Notif6_RecipientsApp" (Code grant + PKCE)
+  tableId:  '7022ded7-f2c2-47d6-b3ac-2c6023f7e5bb',   // Data Table Notif6_Recipients
+  scope:    'architect user-basic-info',
+};
+const REDIRECT = location.origin + location.pathname;
+const API = 'https://api.' + CFG.region, LOGIN = 'https://login.' + CFG.region;
+
+const COLS = [
+  { f:'Name',                 label:'Name',          t:'text',  cls:'w-name' },
+  { f:'Enabled',              label:'Enabled',       t:'bool' },
+  { f:'SendSMS',              label:'SMS',           t:'bool' },
+  { f:'SmsTo',                label:'SMS to',        t:'tel',   cls:'w-tel' },
+  { f:'SmsFrom',              label:'SMS from',      t:'tel',   cls:'w-tel' },
+  { f:'SendWA',               label:'WhatsApp',      t:'bool' },
+  { f:'WaTo',                 label:'WA to',         t:'tel',   cls:'w-tel' },
+  { f:'WaFrom',               label:'WA from',       t:'tel',   cls:'w-tel' },
+  { f:'WaTemplateResponseId', label:'WA template id',t:'text',  cls:'w-tpl' },
+  { f:'SendDesktop',          label:'Desktop',       t:'bool' },
+  { f:'UserId',               label:'User id',       t:'uuid',  cls:'w-id' },
+  { f:'SendEmail',            label:'E-mail',        t:'bool' },
+  { f:'EmailTo',              label:'E-mail to',     t:'email', cls:'w-mail' },
+];
+const RX = { tel:/^\+\d{8,15}$/, uuid:/^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/, email:/^[^@\s]+@[^@\s]+\.[^@\s]+$/ };
+
+/* ---------- small helpers ---------- */
+const $ = (id) => document.getElementById(id);
+const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const rand = (n) => b64url(crypto.getRandomValues(new Uint8Array(n)));
+const ss = { get:(k)=>{ try { return sessionStorage.getItem(k); } catch(e){ return null; } },
+             set:(k,v)=>{ try { sessionStorage.setItem(k,v); } catch(e){} },
+             del:(k)=>{ try { sessionStorage.removeItem(k); } catch(e){} } };
+function status(msg, kind) { const s = $('status'); s.textContent = msg || ''; s.className = msg ? kind : ''; }
+const numKey = (k) => { const n = Number(k); return Number.isInteger(n) && n > 0 ? n : Infinity; };
+
+/* ---------- sign in (Authorization Code + PKCE, no client secret) ---------- */
+async function signIn() {
+  const verifier = rand(48), state = rand(16);
+  ss.set('pkce_verifier', verifier); ss.set('pkce_state', state);
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  const u = new URL(LOGIN + '/oauth/authorize');
+  u.search = new URLSearchParams({ response_type:'code', client_id:CFG.clientId, redirect_uri:REDIRECT,
+    code_challenge:challenge, code_challenge_method:'S256', state, scope:CFG.scope }).toString();
+  location.assign(u.toString());
+}
+async function handleRedirect() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('code') && !q.has('error')) return false;
+  history.replaceState(null, '', location.pathname);
+  if (q.has('error')) { status('Sign-in failed: ' + q.get('error') + (q.get('error_description') ? ' - ' + q.get('error_description') : ''), 'err'); return true; }
+  if (q.get('state') !== ss.get('pkce_state')) { status('Sign-in failed: state mismatch. Please try again.', 'err'); return true; }
+  const r = await fetch(LOGIN + '/oauth/token', { method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type:'authorization_code', code:q.get('code'), redirect_uri:REDIRECT, client_id:CFG.clientId, code_verifier:ss.get('pkce_verifier') || '' }) });
+  const j = await r.json().catch(() => ({}));
+  ss.del('pkce_verifier'); ss.del('pkce_state');
+  if (!r.ok || !j.access_token) { status('Sign-in failed: ' + (j.error_description || j.error || r.status), 'err'); return true; }
+  ss.set('token', j.access_token); ss.set('expires', String(Date.now() + (j.expires_in || 3600) * 1000));
+  return false;
+}
+const token = () => (Number(ss.get('expires') || 0) > Date.now() ? ss.get('token') : null);
+function signOut() { ss.del('token'); ss.del('expires'); location.assign(location.pathname); }
+
+/* ---------- Genesys API ---------- */
+async function api(method, path, body) {
+  const t = token(); if (!t) { showLogin(); throw new Error('Your session expired. Please sign in again.'); }
+  const r = await fetch(API + path, { method, headers: Object.assign({ Authorization:'Bearer ' + t }, body ? { 'Content-Type':'application/json' } : {}), body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { ss.del('token'); showLogin(); throw new Error('Your session expired. Please sign in again.'); }
+  const text = await r.text(); let j = {}; try { j = text ? JSON.parse(text) : {}; } catch (e) { j = { message:text }; }
+  if (!r.ok) throw new Error((j.message || r.statusText) + ' (' + r.status + ')' + (j.errors && j.errors[0] ? ': ' + j.errors[0].message : ''));
+  return j;
+}
+const rowsPath = (key) => '/api/v2/flows/datatables/' + CFG.tableId + '/rows' + (key !== undefined ? '/' + encodeURIComponent(key) : '');
+
+/* ---------- state ---------- */
+let rows = [];   // { key, data:{...}, orig:'json'|null (null = new), sel:false }
+const blank = () => { const d = {}; COLS.forEach(c => d[c.f] = c.t === 'bool' ? false : ''); return d; };
+const norm = (src) => { const d = blank(); COLS.forEach(c => { const v = src[c.f]; d[c.f] = c.t === 'bool' ? !!v : (v == null ? '' : String(v)); }); return d; };
+const isDirty = (r) => r.orig === null || JSON.stringify(r.data) !== r.orig;
+const hasChanges = () => rows.some(isDirty);
+function invalid(c, v) { v = String(v).trim(); return c.t in RX && v !== '' && !RX[c.t].test(v); }
+const rowErrors = (r) => COLS.filter(c => invalid(c, r.data[c.f])).map(c => 'line ' + r.key + ': ' + c.label);
+
+async function load() {
+  status('Loading ...', 'info');
+  const out = []; let page = 1, pages = 1;
+  do {
+    const j = await api('GET', rowsPath() + '?showbrief=false&pageSize=500&pageNumber=' + page);
+    (j.entities || []).forEach(e => out.push(e)); pages = j.pageCount || 1; page++;
+  } while (page <= pages);
+  rows = out.map(e => { const d = norm(e); return { key:String(e.key), data:d, orig:JSON.stringify(d), sel:false }; })
+            .sort((a, b) => numKey(a.key) - numKey(b.key) || a.key.localeCompare(b.key));
+  render(); status('', '');
+  const gaps = rows.some((r, i) => r.key !== String(i + 1));
+  if (gaps) status('The keys are not 1..N (gaps or non-numeric keys). The workflow stops at the first missing key. Click "Save changes" or "Delete selected" to renumber, or use the button below.', 'info');
+}
+
+/* ---------- rendering ---------- */
+function render() {
+  const head = $('grid').tHead; head.textContent = '';
+  const hr = head.insertRow();
+  const th0 = document.createElement('th'); const all = document.createElement('input'); all.type = 'checkbox'; all.title = 'select all';
+  all.onchange = () => { rows.forEach(r => r.sel = all.checked); render(); }; th0.appendChild(all); hr.appendChild(th0);
+  const thk = document.createElement('th'); thk.textContent = 'Key'; hr.appendChild(thk);
+  COLS.forEach(c => { const th = document.createElement('th'); th.textContent = c.label; if (c.t === 'bool') th.className = 'c'; hr.appendChild(th); });
+
+  const body = $('grid').tBodies[0]; body.textContent = '';
+  rows.forEach((r) => {
+    const tr = body.insertRow(); tr.className = (r.orig === null ? 'isnew ' : isDirty(r) ? 'dirty ' : '') + (r.sel ? 'sel' : '');
+    const c0 = tr.insertCell(); const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = r.sel;
+    cb.onchange = () => { r.sel = cb.checked; render(); }; c0.appendChild(cb);
+    const ck = tr.insertCell(); ck.className = 'key'; ck.textContent = r.key;
+    COLS.forEach(c => {
+      const td = tr.insertCell(); const inp = document.createElement('input');
+      if (c.t === 'bool') { inp.type = 'checkbox'; inp.checked = r.data[c.f]; td.className = 'c';
+        inp.onchange = () => { r.data[c.f] = inp.checked; refreshButtons(); tr.className = rowClass(r); }; }
+      else { inp.type = c.t === 'tel' ? 'tel' : c.t === 'email' ? 'email' : 'text'; inp.value = r.data[c.f]; inp.setAttribute('dir', 'auto'); inp.spellcheck = false;
+        inp.autocomplete = 'off'; inp.setAttribute('aria-label', c.label + ' line ' + r.key); if (c.cls) td.className = c.cls;
+        inp.oninput = () => { r.data[c.f] = inp.value; inp.classList.toggle('bad', invalid(c, inp.value)); refreshButtons(); tr.className = rowClass(r); };
+        inp.classList.toggle('bad', invalid(c, r.data[c.f])); }
+      td.appendChild(inp);
+    });
+  });
+  $('empty').hidden = rows.length > 0; refreshButtons();
+}
+const rowClass = (r) => (r.orig === null ? 'isnew ' : isDirty(r) ? 'dirty ' : '') + (r.sel ? 'sel' : '');
+function refreshButtons() {
+  const ch = hasChanges(), sel = rows.filter(r => r.sel).length;
+  $('btnSave').disabled = !ch; $('btnDiscard').disabled = !ch; $('btnDel').disabled = sel === 0;
+  $('count').textContent = rows.length + ' line(s)' + (sel ? ', ' + sel + ' selected' : '');
+}
+
+/* ---------- actions ---------- */
+function addLine() {
+  const max = rows.reduce((m, r) => Math.max(m, numKey(r.key) === Infinity ? 0 : numKey(r.key)), 0);
+  rows.push({ key:String(max + 1), data:blank(), orig:null, sel:false }); render();
+  const last = $('grid').tBodies[0].lastElementChild; if (last) { last.scrollIntoView({ block:'nearest' }); const i = last.querySelector('input[type=text]'); if (i) i.focus(); }
+}
+async function renumber() {          // keys -> 1..N, ascending: the target key is always free
+  const j = []; let page = 1, pages = 1;
+  do { const x = await api('GET', rowsPath() + '?showbrief=false&pageSize=500&pageNumber=' + page); (x.entities || []).forEach(e => j.push(e)); pages = x.pageCount || 1; page++; } while (page <= pages);
+  const sorted = j.sort((a, b) => numKey(a.key) - numKey(b.key) || String(a.key).localeCompare(String(b.key)));
+  let moved = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const want = String(i + 1), e = sorted[i];
+    if (String(e.key) === want) continue;
+    const d = norm(e); await api('POST', rowsPath(), Object.assign({ key:want }, d));
+    await api('DELETE', rowsPath(String(e.key))); moved++;
+  }
+  return moved;
+}
+async function save() {
+  rows.forEach(r => COLS.forEach(c => { if (c.t !== 'bool') r.data[c.f] = String(r.data[c.f]).trim(); }));
+  const errs = rows.filter(isDirty).flatMap(rowErrors);
+  if (errs.length) { status('Fix these fields first: ' + errs.join('; '), 'err'); return; }
+  $('btnSave').disabled = true; status('Saving ...', 'info');
+  try {
+    let n = 0;
+    for (const r of rows.filter(isDirty)) {
+      const body = Object.assign({ key:r.key }, r.data);
+      if (r.orig === null) await api('POST', rowsPath(), body); else await api('PUT', rowsPath(r.key), body);
+      n++;
+    }
+    const moved = await renumber(); await load();
+    status('Saved ' + n + ' line(s)' + (moved ? '; renumbered ' + moved + ' key(s)' : '') + '.', 'ok');
+  } catch (e) { status('Save failed: ' + e.message, 'err'); refreshButtons(); }
+}
+function confirmDelete(text) {
+  return new Promise(res => { const d = $('dlg'); $('dlgText').textContent = text; d.returnValue = ''; d.onclose = () => res(d.returnValue === 'ok'); d.showModal(); });
+}
+async function del() {
+  const sel = rows.filter(r => r.sel); if (!sel.length) return;
+  if (rows.some(r => r.orig !== null && isDirty(r))) { status('Save or discard your changes first, then delete.', 'err'); return; }
+  const ok = await confirmDelete('Delete ' + sel.length + ' line(s): ' + sel.map(r => r.key + (r.data.Name ? ' (' + r.data.Name + ')' : '')).join(', ') + '?\nThe remaining lines are renumbered 1..N.');
+  if (!ok) return;
+  status('Deleting ...', 'info');
+  try {
+    for (const r of sel) { if (r.orig !== null) await api('DELETE', rowsPath(r.key)); }
+    const moved = await renumber(); await load();
+    status('Deleted ' + sel.length + ' line(s)' + (moved ? '; renumbered ' + moved + ' key(s)' : '') + '.', 'ok');
+  } catch (e) { status('Delete failed: ' + e.message, 'err'); await load().catch(() => {}); }
+}
+async function discard() { if (hasChanges() && !confirm('Discard all unsaved changes?')) return; await load().catch(e => status(e.message, 'err')); }
+
+/* ---------- start ---------- */
+function showLogin() { $('app').hidden = true; $('login').style.display = 'block'; $('btnOut').hidden = true; $('who').textContent = ''; }
+async function start() {
+  $('btnIn').onclick = signIn; $('btnOut').onclick = signOut;
+  $('btnAdd').onclick = addLine; $('btnSave').onclick = save; $('btnDel').onclick = del; $('btnDiscard').onclick = discard;
+  $('btnReload').onclick = () => (hasChanges() && !confirm('Discard unsaved changes and reload?')) ? 0 : load().catch(e => status(e.message, 'err'));
+  window.addEventListener('beforeunload', (e) => { if (hasChanges()) { e.preventDefault(); e.returnValue = ''; } });
+  try { await handleRedirect(); } catch (e) { status('Sign-in failed: ' + e.message, 'err'); }
+  if (!token()) { showLogin(); return; }
+  $('login').style.display = 'none'; $('app').hidden = false; $('btnOut').hidden = false;
+  try { const me = await api('GET', '/api/v2/users/me'); $('who').textContent = 'Signed in: ' + (me.name || me.email || ''); } catch (e) {}
+  try { const t = await api('GET', '/api/v2/flows/datatables/' + CFG.tableId); $('tname').textContent = '- ' + (t.name || ''); } catch (e) {}
+  await load().catch(e => status('Cannot load the table: ' + e.message, 'err'));
+}
+start();
+</script>
+</body>
+</html>
